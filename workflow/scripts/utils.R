@@ -44,9 +44,9 @@ plot_panel <- function(mat, meta, label) {
   p1 <- fviz_eig(res.pca)
 
   # plot PCs
-  p2 <- plot_PCs(res.pca, meta, "sex")
-  p3 <- plot_PCs(res.pca, meta, "primary_tumor_site")
-  p4 <- plot_PCs(res.pca, meta, "organoid_sample_class")
+  p2 <- plot_PCs(res.pca, meta, "sex") + scale_fill_manual(values = sex_pal)
+  p3 <- plot_PCs(res.pca, meta, "primary_tumor_site") + scale_fill_manual(values = tissue_pal)
+  p4 <- plot_PCs(res.pca, meta, "organoid_sample_class") + scale_fill_manual(values = orgclass_pal)
 
   filename <- paste0("data/results/figures/0-DataExploration/pca_", label, ".png")
   cat("Saving figure to", filename, "\n")

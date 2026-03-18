@@ -6,3 +6,13 @@ tissue_pal <- c(
     "Ovary/Fallopian Tube" = "#F37748",
     "Pancreas" = "#A53860"
 )
+
+sex_pal <- c(
+    "Female" = "#ADA0B0",
+    "Male" = "#676F54"
+)
+
+orgclass_pal <- c(
+    "PO" = "#46351D",
+    "XO" = "#839D9A"
+)

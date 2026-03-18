@@ -89,35 +89,6 @@ plot_panel(mut, meta, "MUT")
 # Data exploration: Doubling Time
 ###########################################################
 
-#' Function to plot doubling rate vs variables
-#'
-plot_doubling <- function(var, w) { 
-
-  # get label
-  label <- switch(
-    var,
-    sex = "Sex",
-    primary_tumor_site = "Tissue Type",
-    organoid_sample_class = "Organoid Class"
-  )
-
-  p <- ggplot(meta, aes(x = .data[[var]], y = doubling_rate)) +
-    geom_boxplot(fill = "#9AA899") + 
-    geom_jitter(width = 0.2, alpha = 0.6) +
-    theme_minimal() +
-    theme(
-      panel.border = element_rect()
-    ) +
-    labs(y = "Doubling Rate", x = label)
-  
-  filename <- paste0("data/results/figures/0-DataExploration/DT_", sub(" ", "_", label), ".png")
-  cat("Saving figure to", filename, "\n")
-  png(filename, width = w, height = 4, res = 600, units = "in")
-  print(p)
-  dev.off()
-
-}
-
 plot_doubling("sex", 5)
 plot_doubling("organoid_sample_class", 5)
 plot_doubling("primary_tumor_site", 6)

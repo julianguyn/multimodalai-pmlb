@@ -65,7 +65,9 @@ plot_doubling <- function(var, w) {
     var,
     sex = "Sex",
     primary_tumor_site = "Tissue Type",
-    organoid_sample_class = "Organoid Class"
+    organoid_sample_class = "Organoid Class",
+    SNF2 = "SNF2",
+    SNF6 = "SNF6"
   )
 
   p <- ggplot(meta, aes(x = .data[[var]], y = doubling_rate)) +
@@ -83,4 +85,39 @@ plot_doubling <- function(var, w) {
   print(p)
   dev.off()
 
+}
+
+
+#' Plot doubling rate vs snf clusters + cancer type
+#' 
+plot_snf_clusters <- function(snf, meta, label) {
+
+  w <- switch(label, SNF2 = 7, SNF6 = 9)
+  h <- switch(label, SNF2 = 3, SNF6 = 5.5)
+
+  snf$doubling_rate <- meta$doubling_rate[match(snf$Organoid.ID, meta$PMLB_organoidID)]
+  snf$Cluster <- factor(snf$Cluster, levels = unique(snf$Cluster))
+
+  p <- ggplot(snf, aes(x = Primary.Tissue, y = doubling_rate, fill = Primary.Tissue)) +
+    geom_boxplot() +
+    geom_jitter(
+      aes(fill = Primary.Tissue),
+      position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.75),
+      shape = 21
+    ) +
+    facet_wrap(~Cluster, scales = "free_x") +
+    scale_fill_manual("Primary Tissue", values = tissue_pal) +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(),
+      legend.key.size = unit(0.7, 'cm'),
+      axis.text.x = element_blank()
+    ) +
+    labs(y = "Doubling Rate", x = "")
+
+  filename <- paste0("data/results/figures/0-DataExploration/snf_", label, ".png")
+  cat("Saving figure to", filename, "\n")
+  png(filename, width = w, height = h, res = 600, units = "in")
+  print(p)
+  dev.off()
 }

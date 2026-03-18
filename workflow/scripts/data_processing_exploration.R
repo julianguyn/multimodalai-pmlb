@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
 })
 
 source("workflow/scripts/utils.R")
+source("workflow/scripts/palettes.R")
 set.seed(101)
 
 ###########################################################
@@ -31,6 +32,10 @@ meta <- read_excel("metadata/PMLB_panOrganoid_multimodal_metadata_20260310.xlsx"
     as.data.frame()
 meta <- meta[complete.cases(meta$doubling_rate),]
 meta$sex <- ifelse(meta$sex == "F", "Female", "Male")
+
+# load in snf clusters (from James)
+snf2 <- read.csv("data/rawdata/snf_clusters_2.csv")
+snf6 <- read.csv("data/rawdata/snf_clusters_6.csv")
 
 ###########################################################
 # Format omics matrices
@@ -61,6 +66,8 @@ atc <- atc[,match(meta$PMLB_organoidID, colnames(atc))]
 rna <- rna[,match(meta$PMLB_organoidID, colnames(rna))]
 cnv <- cnv[,match(meta$PMLB_organoidID, colnames(cnv))]
 mut <- mut[,match(meta$PMLB_organoidID, colnames(mut))]
+snf2 <- snf2[match(meta$PMLB_organoidID, snf2$Organoid.ID),]
+snf6 <- snf6[match(meta$PMLB_organoidID, snf6$Organoid.ID),]
 
 ###########################################################
 # Save data inputs for modeling
@@ -74,6 +81,7 @@ write.csv(atc, file = "data/procdata/files/atac.csv", quote = FALSE, row.names =
 write.csv(rna, file = "data/procdata/files/rna.csv", quote = FALSE, row.names = TRUE)
 write.csv(cnv, file = "data/procdata/files/cnv.csv", quote = FALSE, row.names = TRUE)
 write.csv(mut, file = "data/procdata/files/mut.csv", quote = FALSE, row.names = TRUE)
+write.csv(meta, file = "data/procdata/files/meta.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
 # Data exploration: PCA Omics
@@ -89,6 +97,16 @@ plot_panel(mut, meta, "MUT")
 # Data exploration: Doubling Time
 ###########################################################
 
+# add snf cluster assignments
+meta$SNF2 <- factor(snf2$Cluster[match(meta$PMLB_organoidID, snf2$Organoid.ID)])
+meta$SNF6 <- factor(snf6$Cluster[match(meta$PMLB_organoidID, snf6$Organoid.ID)])
+
 plot_doubling("sex", 5)
 plot_doubling("organoid_sample_class", 5)
 plot_doubling("primary_tumor_site", 6)
+plot_doubling("SNF2", 5)
+plot_doubling("SNF6", 6)
+
+# plot doubling time by snf cluster coloured by cancer type
+plot_snf_clusters(snf2, meta, "SNF2")
+plot_snf_clusters(snf6, meta, "SNF6")

@@ -16,3 +16,7 @@ orgclass_pal <- c(
     "PO" = "#46351D",
     "XO" = "#839D9A"
 )
+
+pale_blue = "#677DB7"
+dark_blue = "#454B66"
+col = "#C0BCB5"

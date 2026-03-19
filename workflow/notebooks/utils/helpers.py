@@ -7,6 +7,8 @@ import xgboost as xgb
 from scipy.stats import spearmanr, pearsonr
 import shap
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+newcmp = mcolors.LinearSegmentedColormap.from_list("custom", ["blue", "red"])
 
 
 def spearman_scorer(y_true, y_pred):
@@ -46,25 +48,24 @@ def run_shap(X, final_model, filepath):
     plt.close()
 
 
-def run_elastic_net(X, y, X_val, y_val, path):
+def run_elastic_net(X, y, path):
     """
-    Run Elastic Net with 5foldCV
-    Final model, selected with most common hyperparameters, fitted to full dataset
-    SHAP evaluated on final model
+    Run Elastic Net with nested 5foldCV
     """
 
-    # initialize folds (5 folds, 80% train, 20% test)
+    # initialize outer folds (5 folds, 80% train, 20% test)
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=101)
-    inner_cv = KFold(n_splits=5, shuffle=True, random_state=101)
 
     # initialize variables to store results
     results = []
-    final_results = []
     hyperparams_list = []
     fold = 1
 
     # loop through each of the outer five folds
     for train_index, test_index in outer_cv.split(X):
+
+        # initialize inner folds (5 folds, 80% train, 20% test)
+        inner_cv = KFold(n_splits=5, shuffle=True, random_state=fold)
 
         # split train and test
         X_train, X_test = X.iloc[train_index], X.iloc[test_index]
@@ -139,24 +140,3 @@ def run_elastic_net(X, y, X_val, y_val, path):
 
     # run shap
     #run_shap(X, final_model, path)
-
-    # get predicted values for validation set
-    y_pred = final_model.predict(X_val)
-
-    # compute metics
-    s_corr = spearmanr(y_val, y_pred).correlation
-    p_corr = pearsonr(y_val, y_pred)[0]
-    rmse = root_mean_squared_error(y_val, y_pred)
-    mae = mean_absolute_error(y_val, y_pred)
-
-    final_results.append({
-        "spearman": s_corr,
-        "pearson": p_corr,
-        "rmse": rmse,
-        "mae": mae,
-        "alpha": final_params["alpha"],
-        "l1_ratio": final_params["l1_ratio"],
-        "max_iter": final_params["max_iter"]
-    })
-    final_results = pd.DataFrame(final_results)
-    final_results.to_csv(("data/results/data/"+path+"en_final.csv"), index=False)

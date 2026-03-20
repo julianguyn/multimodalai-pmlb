@@ -124,49 +124,57 @@ p1 <- ggplot(modality_df, aes(x = modality, y = omic, fill = present)) +
     labs(y = NULL, x = NULL)
 
 # spearman
-p2 <- ggplot(model_res, aes(x = modality, y = spearman)) +
-    geom_boxplot(fill = col) +
-    geom_jitter(shape = 21, fill = col, alpha = 0.8, width = 0.2) +
+p2 <- ggplot(model_res, aes(x = modality, y = spearman, fill = approach)) +
+    geom_boxplot() +
+    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+    scale_fill_manual(values = c(pale_blue, dark_blue)) +
     theme_minimal() +
     theme(
         panel.border = element_rect(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.title.x = element_blank()
+        axis.title.x = element_blank(),
+        legend.position = "none"
 
     ) +
     labs(x = "Modalities", y = "Spearman Correlation")
 
 # pearson
-p3 <- ggplot(model_res, aes(x = modality, y = pearson)) +
-    geom_boxplot(fill = col) +
-    geom_jitter(shape = 21, fill = col, alpha = 0.8, width = 0.2) +
+p3 <- ggplot(model_res, aes(x = modality, y = pearson, fill = approach)) +
+    geom_boxplot() +
+    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+    scale_fill_manual(values = c(pale_blue, dark_blue)) +
     theme_minimal() +
-    theme(panel.border = element_rect()) +
+    theme(
+        panel.border = element_rect(),
+        legend.position = "none") +
     labs(x = "Modalities", y = "Pearson Correlation")
 
 # rmse
-p4 <- ggplot(model_res, aes(x = modality, y = rmse)) +
-    geom_boxplot(fill = col) +
-    geom_jitter(shape = 21, fill = col, alpha = 0.8, width = 0.2) +
+p4 <- ggplot(model_res, aes(x = modality, y = rmse, fill = approach)) +
+    geom_boxplot() +
+    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+    scale_fill_manual(values = c(pale_blue, dark_blue)) +
     theme_minimal() +
     theme(
         panel.border = element_rect(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.title.x = element_blank()
+        axis.title.x = element_blank(),
+        legend.position = "none"
 
     ) +
     labs(x = "Modalities", y = "Root Mean Square Error")
 
 # mae
-p5 <- ggplot(model_res, aes(x = modality, y = mae)) +
-    geom_boxplot(fill = col) +
-    geom_jitter(shape = 21, fill = col, alpha = 0.8, width = 0.2) +
+p5 <- ggplot(model_res, aes(x = modality, y = mae, fill = approach)) +
+    geom_boxplot() +
+    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+    scale_fill_manual(values = c(pale_blue, dark_blue)) +
     theme_minimal() +
     theme(
-        panel.border = element_rect()
-
+        panel.border = element_rect(),
+        legend.position = "none"
     ) +
     labs(x = "Modalities", y = "Mean Absolute Error")
 

@@ -61,7 +61,11 @@ mut <- mutCountMatrix(
   removeNonMutated = TRUE
 ) |> as.data.frame()
 
-# keep only 66 samples of interest
+# remove sample that failed QC
+to_remove <- "PHLC0362.TXO"
+meta <- meta[meta$PMLB_organoidID != "PHLC0362.TXO", ]
+
+# keep only 65 samples of interest
 atc <- atc[,match(meta$PMLB_organoidID, colnames(atc))]
 rna <- rna[,match(meta$PMLB_organoidID, colnames(rna))]
 cnv <- cnv[,match(meta$PMLB_organoidID, colnames(cnv))]

@@ -9,14 +9,11 @@ source("workflow/scripts/utils.R")
 source("workflow/scripts/palettes.R")
 set.seed(101)
 
-# update this to whatever model is being evaluated
-model <- "en"
-
 ###########################################################
 # Load in model final data
 ###########################################################
 
-pattern <- paste0(model, "_folds.csv")
+pattern <- "_folds.csv"
 uni_data <- "data/results/data/1-Unimodal-OmicOnly"
 multi_data <- "data/results/data/2-Multimodal-OmicOnly"
 
@@ -40,7 +37,9 @@ model_res <- data.frame(matrix(nrow=0, ncol=8))
 
 # unimodal model outputs
 for (file in unimodal) {
-    modality <- sub(paste0(uni_data, "/"), "", sub(paste0("_", pattern), "", file))
+    anno <- sub(paste0(uni_data, "/"), "", sub(pattern, "", file))
+    modality <- sub("_.*", "", anno)
+    model <- sub(".*_", "", anno)
     df <- read.csv(file)
     model_res <- rbind(
         model_res,
@@ -59,7 +58,9 @@ for (file in unimodal) {
 
 # multimodal model outputs
 for (file in multimodal) {
-    modality <- sub(paste0(multi_data, "/"), "", sub(paste0("_", pattern), "", file))
+    anno <- sub(paste0(multi_data, "/"), "", sub(pattern, "", file))
+    model <- sub(".*_", "", anno)
+    modality <- sub(paste0("_", model), "", anno)
     df <- read.csv(file)
     model_res <- rbind(
         model_res,
@@ -77,7 +78,7 @@ for (file in multimodal) {
 }
 
 ###########################################################
-# Format results for plotting
+# Format levels
 ###########################################################
 
 # modality levels
@@ -88,10 +89,41 @@ modality_levels <- c(
     "atac", "rna", "cnv", "mut"
 )
 
-# format modalities
+# model levels
+model_labs <- c("Elastic Net", "Random Forest", "LASSO")
+
+# format modalities and models
 model_res$modality[model_res$modality == "all_modalities"] <- "atac_rna_cnv_mut"
 model_res$modality <- gsub("_", "\n", model_res$modality)
 model_res$modality <- factor(model_res$modality, levels = modality_levels)
+model_res$model <- factor(model_res$model, levels = c("en", "rf", "lasso"), labels = model_labs)
+
+###########################################################
+# Model performance comparison
+###########################################################
+
+toPlot <- model_res[model_res$modality %in% c("atac\nrna\ncnv\nmut", "atac\nrna", "atac", "rna", "cnv", "mut"), ]
+
+p <- ggplot(toPlot, aes(x = modality, y = spearman, fill = model)) +
+    geom_boxplot() +
+    geom_jitter(shape = 21, alpha = 0.8, position = position_jitterdodge(jitter.width = 0.2)) +
+    scale_fill_manual("Model", values = model_pal) +
+    theme_minimal() +
+    theme(
+        panel.border = element_rect(),
+        legend.key.size = unit(0.7, 'cm')
+    ) +
+    labs(x = "Modalities", y = "Spearman Correlation")
+
+filename <- paste0("data/results/figures/12-OmicOnly/model_comparisons.png")
+cat("Saving figure to", filename, "\n")
+png(filename, width = 8, height = 4, res = 600, units = "in")
+print(p)
+dev.off()
+
+###########################################################
+# Format data for plotting
+###########################################################
 
 # build long dataframe for the tile plot
 modality_df <- expand.grid(

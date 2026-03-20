@@ -17,6 +17,12 @@ orgclass_pal <- c(
     "XO" = "#839D9A"
 )
 
+model_pal <- c(
+    "Elastic Net" = "#FFE1C6",
+    "Random Forest" = "#916C80",
+    "LASSO" = "#48284A"
+)
+
 pale_blue = "#8692B1"
 dark_blue = "#454B66"
 col = "#A2AEBB"

@@ -122,7 +122,7 @@ print(p)
 dev.off()
 
 ###########################################################
-# Format data for plotting
+# Make modality plot
 ###########################################################
 
 # build long dataframe for the tile plot
@@ -136,10 +136,6 @@ modality_df <- expand.grid(
     modality = factor(modality, levels = modality_levels),
     omic = factor(omic, levels = rev(c("atac", "rna", "cnv", "mut")))
   )
-
-###########################################################
-# Plot model outputs
-###########################################################
 
 # modality tile plot
 p1 <- ggplot(modality_df, aes(x = modality, y = omic, fill = present)) +
@@ -155,71 +151,9 @@ p1 <- ggplot(modality_df, aes(x = modality, y = omic, fill = present)) +
     ) +
     labs(y = NULL, x = NULL)
 
-# spearman
-p2 <- ggplot(model_res, aes(x = modality, y = spearman, fill = approach)) +
-    geom_boxplot() +
-    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
-    scale_fill_manual(values = c(pale_blue, dark_blue)) +
-    theme_minimal() +
-    theme(
-        panel.border = element_rect(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.x = element_blank(),
-        legend.position = "none"
+###########################################################
+# Plot model outputs
+###########################################################
 
-    ) +
-    labs(x = "Modalities", y = "Spearman Correlation")
-
-# pearson
-p3 <- ggplot(model_res, aes(x = modality, y = pearson, fill = approach)) +
-    geom_boxplot() +
-    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
-    scale_fill_manual(values = c(pale_blue, dark_blue)) +
-    theme_minimal() +
-    theme(
-        panel.border = element_rect(),
-        legend.position = "none") +
-    labs(x = "Modalities", y = "Pearson Correlation")
-
-# rmse
-p4 <- ggplot(model_res, aes(x = modality, y = rmse, fill = approach)) +
-    geom_boxplot() +
-    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
-    scale_fill_manual(values = c(pale_blue, dark_blue)) +
-    theme_minimal() +
-    theme(
-        panel.border = element_rect(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.x = element_blank(),
-        legend.position = "none"
-
-    ) +
-    labs(x = "Modalities", y = "Root Mean Square Error")
-
-# mae
-p5 <- ggplot(model_res, aes(x = modality, y = mae, fill = approach)) +
-    geom_boxplot() +
-    geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
-    scale_fill_manual(values = c(pale_blue, dark_blue)) +
-    theme_minimal() +
-    theme(
-        panel.border = element_rect(),
-        legend.position = "none"
-    ) +
-    labs(x = "Modalities", y = "Mean Absolute Error")
-
-# correlations plot
-filename <- paste0("data/results/figures/12-OmicOnly/correlations_", model, ".png")
-cat("Saving figure to", filename, "\n")
-png(filename, width = 7, height = 5.5, res = 600, units = "in")
-p1 / p2 / p3  + plot_layout(heights = c(1, 2.5, 2.75))
-dev.off()
-
-# errors plot
-filename <- paste0("data/results/figures/12-OmicOnly/errors_", model, ".png")
-cat("Saving figure to", filename, "\n")
-png(filename, width = 7, height = 5.5, res = 600, units = "in")
-p1 / p4 / p5  + plot_layout(heights = c(1, 2.5, 2.75))
-dev.off()
+plot_model_performance("Elastic Net")
+plot_model_performance("Random Forest")

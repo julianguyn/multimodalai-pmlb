@@ -121,3 +121,82 @@ plot_snf_clusters <- function(snf, meta, label) {
   print(p)
   dev.off()
 }
+
+#' Plot model performance across modalities
+#' 
+plot_model_performance <- function(model) {
+
+    toPlot <- model_res[model_res$model == model,]
+
+    # spearman
+    p2 <- ggplot(toPlot, aes(x = modality, y = spearman, fill = approach)) +
+        geom_boxplot() +
+        geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+        scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        ylim(0, 1) +
+        theme_minimal() +
+        theme(
+            panel.border = element_rect(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.x = element_blank(),
+            legend.position = "none"
+
+        ) +
+        labs(x = "Modalities", y = "Spearman Correlation")
+
+    # pearson
+    p3 <- ggplot(toPlot, aes(x = modality, y = pearson, fill = approach)) +
+        geom_boxplot() +
+        geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+        scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        ylim(0, 1) +
+        theme_minimal() +
+        theme(
+            panel.border = element_rect(),
+            legend.position = "none") +
+        labs(x = "Modalities", y = "Pearson Correlation")
+
+    # rmse
+    p4 <- ggplot(toPlot, aes(x = modality, y = rmse, fill = approach)) +
+        geom_boxplot() +
+        geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+        scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        theme_minimal() +
+        theme(
+            panel.border = element_rect(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.x = element_blank(),
+            legend.position = "none"
+
+        ) +
+        labs(x = "Modalities", y = "Root Mean Square Error")
+
+    # mae
+    p5 <- ggplot(toPlot, aes(x = modality, y = mae, fill = approach)) +
+        geom_boxplot() +
+        geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
+        scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        theme_minimal() +
+        theme(
+            panel.border = element_rect(),
+            legend.position = "none"
+        ) +
+        labs(x = "Modalities", y = "Mean Absolute Error")
+
+    # correlations plot
+    filename <- paste0("data/results/figures/12-OmicOnly/correlations_", sub(" ", "", model), ".png")
+    cat("Saving figure to", filename, "\n")
+    png(filename, width = 7, height = 5.5, res = 600, units = "in")
+    print(p1 / p2 / p3  + plot_layout(heights = c(1, 2.5, 2.75)))
+    dev.off()
+
+    # errors plot
+    filename <- paste0("data/results/figures/12-OmicOnly/errors_", sub(" ", "", model), ".png")
+    cat("Saving figure to", filename, "\n")
+    png(filename, width = 7, height = 5.5, res = 600, units = "in")
+    print(p1 / p4 / p5  + plot_layout(heights = c(1, 2.5, 2.75)))
+    dev.off()
+
+}

@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import KFold, train_test_split, GridSearchCV
+from sklearn.model_selection import KFold, GridSearchCV
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error, make_scorer
@@ -55,12 +55,13 @@ Simple ML models with nested 5foldCV
     * Random Forest
 """
 
-def run_lasso(X, y, path):
+def run_lasso(X, y, path, preds=False):
 
     # initialize outer folds (5 folds, 80% train, 20% test)
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=101)
 
     # initialize variables to store results
+    fold_preds = pd.Series(index=y.index, dtype=float)
     results = []
     hyperparams_list = []
     fold = 1
@@ -140,7 +141,16 @@ def run_lasso(X, y, path):
     #run_shap(X, final_model, path)
 
 
-def run_elastic_net(X, y, path):
+def run_elastic_net(X, y, path, preds=False):
+
+    # initialize outer folds (5 folds, 80% train, 20% test)
+    outer_cv = KFold(n_splits=5, shuffle=True, random_state=101)
+
+    # initialize variables to store results
+    fold_preds = pd.Series(index=y.index, dtype=float)
+    results = []
+    hyperparams_list = []
+    fold = 1
 
     # initialize outer folds (5 folds, 80% train, 20% test)
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=101)
@@ -189,7 +199,8 @@ def run_elastic_net(X, y, path):
         hyperparams_list.append(best_params)
 
         # get predicted values for test data
-        y_pred = reg_best.predict(X_test)
+        y_pred = pd.Series(reg_best.predict(X_test), index=y_test.index)
+        fold_preds.loc[y_test.index] = y_pred
 
         # compute metrics
         s_corr = spearmanr(y_test, y_pred).correlation
@@ -223,6 +234,9 @@ def run_elastic_net(X, y, path):
 
     # run shap
     #run_shap(X, final_model, path)
+
+    if preds:
+        return fold_preds
 
 def run_random_forest(X, y, path):
 

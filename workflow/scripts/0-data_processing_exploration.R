@@ -124,7 +124,6 @@ rownames(atc_gene) <- atc_gene$Gene
 atc_gene$Gene <- NULL
 write.csv(atc_gene, file = "data/procdata/files/atac_gene.csv", quote = FALSE, row.names = TRUE)
 
-
 # map RNA ensembl to gene names
 mart <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
 mapping <- getBM(

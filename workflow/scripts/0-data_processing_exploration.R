@@ -1,11 +1,16 @@
 # load libraries
 suppressPackageStartupMessages({
     library(data.table)
+    library(dplyr)
     library(readxl)
     library(maftools)
     library(factoextra)
     library(ggplot2)
     library(ggpubr)
+    library(GenomicRanges)
+    library(ChIPseeker)
+    library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+    library(biomaRt)
 })
 
 source("workflow/scripts/utils.R")
@@ -32,10 +37,6 @@ meta <- read_excel("metadata/PMLB_panOrganoid_multimodal_metadata_20260310.xlsx"
     as.data.frame()
 meta <- meta[complete.cases(meta$doubling_rate),]
 meta$sex <- ifelse(meta$sex == "F", "Female", "Male")
-
-# load in snf clusters (from James)
-snf2 <- read.csv("data/rawdata/snf_clusters_2.csv")
-snf6 <- read.csv("data/rawdata/snf_clusters_6.csv")
 
 ###########################################################
 # Format omics matrices
@@ -70,8 +71,6 @@ atc <- atc[,match(meta$PMLB_organoidID, colnames(atc))]
 rna <- rna[,match(meta$PMLB_organoidID, colnames(rna))]
 cnv <- cnv[,match(meta$PMLB_organoidID, colnames(cnv))]
 mut <- mut[,match(meta$PMLB_organoidID, colnames(mut))]
-snf2 <- snf2[match(meta$PMLB_organoidID, snf2$Organoid.ID),]
-snf6 <- snf6[match(meta$PMLB_organoidID, snf6$Organoid.ID),]
 
 ###########################################################
 # Save data inputs for modeling
@@ -88,6 +87,67 @@ write.csv(mut, file = "data/procdata/files/mut.csv", quote = FALSE, row.names = 
 write.csv(meta, file = "data/procdata/files/meta.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
+# Map to common genes
+###########################################################
+
+# get peak coordinates
+coords <- do.call(rbind, strsplit(rownames(atc), ":")) |> as.data.frame()
+gr <- GRanges(seqnames = coords$V1, ranges = IRanges(as.numeric(coords$V2), as.numeric(coords$V3)))
+
+# annotate peaks
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+anno <- annotatePeak(gr, TxDb=txdb, annoDb="org.Hs.eg.db")
+
+p <- ggplot(anno@annoStat, aes(fill=Feature, y=Frequency, x="PDOs")) + 
+    geom_bar(position="fill", stat="identity", color = "black") +
+    scale_fill_manual(values = genefeat_pal) +
+    theme_minimal() +
+    labs(y = "Percentage (%)", x = "")
+ggsave("data/results/figures/0-DataExploration/atac_peakanno.png", plot=p, width = 4, height = 5)
+
+# keep promoter regions
+anno_promoter <- as.data.frame(anno)[grep("Promoter", as.data.frame(anno)$annotation), ]
+anno_promoter$promoter_peaks <- paste(anno_promoter$seqnames, anno_promoter$start, anno_promoter$end, sep = ":")
+atc_promoter <- atc[rownames(atc) %in% anno_promoter$promoter_peaks,] #68929 peaks
+
+# map to genes
+gene_map <- anno_promoter$SYMBOL[match(rownames(atc_promoter), anno_promoter$promoter_peaks)]
+
+#rownames(atc_promoter) <- anno_promoter$SYMBOL[match(rownames(atc_promoter), anno_promoter$promoter_peaks)]
+atc_gene <- as.data.frame(atc_promoter) %>%
+  mutate(Gene = gene_map) %>%
+  group_by(Gene) %>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+atc_gene <- as.data.frame(atc_gene)
+atc_gene <- atc_gene[!is.na(atc_gene$Gene), ]
+rownames(atc_gene) <- atc_gene$Gene
+atc_gene$Gene <- NULL
+write.csv(atc_gene, file = "data/procdata/files/atac_gene.csv", quote = FALSE, row.names = TRUE)
+
+
+# map RNA ensembl to gene names
+mart <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+mapping <- getBM(
+  attributes = c("ensembl_gene_id", "hgnc_symbol"),
+  filters = "ensembl_gene_id",
+  values = sub("\\..*", "", rownames(rna)),
+  mart = mart
+)
+tt <- as.data.frame(rna)
+tt$ensembl_gene_id <- sub("\\..*", "", rownames(tt))
+rna_annot <- left_join(tt, mapping, by = "ensembl_gene_id")
+rna_annot <- rna_annot %>% filter(hgnc_symbol != "")
+
+# average expression of overlapping gene symbols
+rna_gene <- rna_annot %>%
+  group_by(hgnc_symbol) %>%
+  summarise(across(where(is.numeric), mean)) %>%
+  as.data.frame()
+rownames(rna_gene) <- avg$hgnc_symbol
+rna_gene$hgnc_symbol <- NULL
+write.csv(rna_gene, file = "data/procdata/files/rna_gene.csv", quote = FALSE, row.names = TRUE)
+
+###########################################################
 # Data exploration: PCA Omics
 ###########################################################
 
@@ -101,16 +161,6 @@ plot_panel(mut, meta, "MUT")
 # Data exploration: Doubling Time
 ###########################################################
 
-# add snf cluster assignments
-meta$SNF2 <- factor(snf2$Cluster[match(meta$PMLB_organoidID, snf2$Organoid.ID)])
-meta$SNF6 <- factor(snf6$Cluster[match(meta$PMLB_organoidID, snf6$Organoid.ID)])
-
 plot_doubling("sex", 5)
 plot_doubling("organoid_sample_class", 5)
 plot_doubling("primary_tumor_site", 6)
-plot_doubling("SNF2", 5)
-plot_doubling("SNF6", 6)
-
-# plot doubling time by snf cluster coloured by cancer type
-plot_snf_clusters(snf2, meta, "SNF2")
-plot_snf_clusters(snf6, meta, "SNF6")

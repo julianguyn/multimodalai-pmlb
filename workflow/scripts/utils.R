@@ -162,6 +162,7 @@ plot_model_performance <- function(model) {
         geom_boxplot() +
         geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
         scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        ylim(10, 80) +
         theme_minimal() +
         theme(
             panel.border = element_rect(),
@@ -178,6 +179,7 @@ plot_model_performance <- function(model) {
         geom_boxplot() +
         geom_jitter(shape = 21, alpha = 0.8, width = 0.2) +
         scale_fill_manual(values = c(pale_blue, dark_blue)) +
+        ylim(10, 80) +
         theme_minimal() +
         theme(
             panel.border = element_rect(),

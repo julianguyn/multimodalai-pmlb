@@ -164,7 +164,7 @@ def run_lasso(X, y, path, repeats=10, preds=False, features=False):
 def run_elastic_net(X, y, path, repeats=10, preds=False, features=False):
 
     # initialize variables to store results
-    fold_preds = pd.Series(index=y.index, dtype=float)
+    fold_preds = []
     results = []
     hyperparams_list = []
     feature_counter = Counter()
@@ -222,7 +222,13 @@ def run_elastic_net(X, y, path, repeats=10, preds=False, features=False):
 
             # get predicted values for test data
             y_pred = pd.Series(reg_best.predict(X_test), index=y_test.index)
-            fold_preds.loc[y_test.index] = y_pred
+            fold_preds.append(pd.DataFrame({
+                "sample": y_test.index,
+                "y_true": y_test.values,
+                "y_pred": y_pred.values,
+                "repeat": repeat+1,
+                "fold": fold
+            }))
 
             # compute metrics
             s_corr = spearmanr(y_test, y_pred).correlation
@@ -259,19 +265,20 @@ def run_elastic_net(X, y, path, repeats=10, preds=False, features=False):
     #run_shap(X, final_model, path)
 
     if features:
-        # save features to dataframe
         feature_freq = pd.DataFrame.from_dict(feature_counter, orient='index', columns=['count'])
         feature_freq['frequency'] = feature_freq['count'] / total_models
         feature_freq = feature_freq.sort_values(by='frequency', ascending=False)
         feature_freq.to_csv(f"data/results/data/{path}en_feature_stability.csv")
 
     if preds:
-        return fold_preds
+        fold_preds_df = pd.concat(fold_preds)
+        fold_preds_df.to_csv(f"data/results/data/{path}en_predictions.csv")
+        
 
 def run_random_forest(X, y, path, repeats=10, preds=False, features=False):
 
     # initialize variables to store results
-    fold_preds = pd.Series(index=y.index, dtype=float)
+    fold_preds = []
     results = []
     hyperparams_list = []
     feature_counter = Counter()
@@ -330,8 +337,14 @@ def run_random_forest(X, y, path, repeats=10, preds=False, features=False):
             total_models += 1
 
             # get predicted values for test data
-            y_pred = reg_best.predict(X_test)
-            fold_preds.loc[y_test.index] = y_pred
+            y_pred = pd.Series(reg_best.predict(X_test), index=y_test.index)
+            fold_preds.append(pd.DataFrame({
+                "sample": y_test.index,
+                "y_true": y_test.values,
+                "y_pred": y_pred.values,
+                "repeat": repeat+1,
+                "fold": fold
+            }))
 
             # compute metrics
             s_corr = spearmanr(y_test, y_pred).correlation
@@ -370,11 +383,11 @@ def run_random_forest(X, y, path, repeats=10, preds=False, features=False):
     #run_shap(X, final_model, path)
 
     if features:
-        # save features to dataframe
         feature_freq = pd.DataFrame.from_dict(feature_counter, orient='index', columns=['count'])
         feature_freq['frequency'] = feature_freq['count'] / total_models
         feature_freq = feature_freq.sort_values(by='frequency', ascending=False)
         feature_freq.to_csv(f"data/results/data/{path}rf_feature_stability.csv")
 
     if preds:
-        return fold_preds
+        fold_preds_df = pd.concat(fold_preds)
+        fold_preds_df.to_csv(f"data/results/data/{path}rf_predictions.csv")

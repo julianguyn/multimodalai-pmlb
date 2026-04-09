@@ -332,7 +332,7 @@ def run_random_forest(X, y, path, repeats=10, preds=False, features=False):
             hyperparams_list.append(best_params)
 
             # get selected features
-            selected_features = X.columns[reg_best.coef_ != 0]
+            selected_features = X.columns[reg_best.feature_importances_ > 0]
             feature_counter.update(selected_features)
             total_models += 1
 

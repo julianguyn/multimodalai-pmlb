@@ -2,7 +2,7 @@
 
 # dirs to create:
 # data/rawdata/TCGA-rna
-# data/results/figures/TCGA-rna
+# data/results/data/TCGA-rna
 
 suppressPackageStartupMessages({
     library(data.table)
@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 })
 
 INDIR = "data/rawdata/TCGA-rna/"
-OUTDIR = "data/results/figures/TCGA-rna/"
+OUTDIR = "data/results/data/TCGA-rna/"
 
 # load data
 files <- list.files(INDIR)
@@ -27,7 +27,7 @@ for (file in files[-1]) {
     cat("---Starting", cohort_name, "\n")
 
     df <- fread(paste0(INDIR, file))
-    print(table(df$attrib_name %in% tt))
+    print(table(df$attrib_name %in% genes))
     genes <- df$attrib_name
     df <- df[,-1]
     df <- as.data.frame(t(df))
@@ -45,3 +45,19 @@ cat("---Starting PCA\n")
 pca_res <- prcomp(rna)
 
 save(pca_res, cohort, file = paste0(OUTDIR, "pca_res.RData"))
+
+# get eigenvalues
+eig_vals <- pca_res$sdev^2
+prop_var <- eig_vals / sum(eig_vals)
+cat("PC1:", prop_var[1], "\n")
+cat("PC2:", prop_var[2], "\n")
+
+# make plot
+toPlot <- as.data.frame(pca_res$x[,1:2])
+toPlot$Cohort <- factor(cohort)
+p <- ggplot(toPlot, aes(x = PC1, y = PC2, color = Cohort)) +
+    geom_point() +
+    theme_bw()
+ggsave(p, file = paste0(OUTDIR, "pca.png"))
+
+print("done")

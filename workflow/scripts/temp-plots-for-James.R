@@ -18,6 +18,10 @@ toPlot <- toPlot %>%
   column_to_rownames("View.1") %>%
   as.matrix()
 
+order <- c("H&E", "IntegrAO", "Mutation", "Methylation", "RNA", "Radiomics")
+toPlot <- toPlot[order, order]
+
+
 toPlot[upper.tri(toPlot)] <- NA
 
 # get rid of diagonal
@@ -31,8 +35,7 @@ Heatmap(
   name = "Correlation",
   na_col = "white",
   col = colorRamp2(c(0.75, 0.85, 1), c("#66c2a5", "#fc8d62", "#8da0cb")),
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
+  cluster_columns = FALSE
 )
 
 # color option 1: blue white pueple
